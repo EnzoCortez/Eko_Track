@@ -10,7 +10,7 @@ from models import db, User, Report, ReportCategory, MunicipalitySettings
 from admin_config import MyAdminIndexView, ReportView, MunicipalitySettingsView, UserView, SecureModelView
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'eko_track_secret_key_123'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'eko_track_secret_key_123')
 
 # Database Configuration: Use DATABASE_URL if available (Render), else local SQLite
 database_url = os.environ.get('DATABASE_URL', 'sqlite:///eko_track_v2.db')
@@ -30,11 +30,16 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Admin Setup
+from flask_admin.menu import MenuLink
 admin = Admin(app, name='Eko Track Admin', index_view=MyAdminIndexView())
 admin.add_view(UserView(User, db.session))
 admin.add_view(ReportView(Report, db.session))
 admin.add_view(SecureModelView(ReportCategory, db.session))
 admin.add_view(MunicipalitySettingsView(MunicipalitySettings, db.session))
+
+# Add Navigation Links
+admin.add_link(MenuLink(name='Main Menu', category='', url='/'))
+admin.add_link(MenuLink(name='Logout', category='', url='/logout'))
 
 @app.route('/')
 def index():
@@ -181,6 +186,6 @@ if __name__ == '__main__':
             admin_user = User(username='admin', password=hashed_pw, is_admin=True)
             db.session.add(admin_user)
             db.session.commit()
-            print("Default admin user created (admin/admin)")
+            pass
             
-    app.run(debug=True)
+    app.run()

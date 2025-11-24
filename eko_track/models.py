@@ -41,7 +41,10 @@ class Report(db.Model):
     # Estimated cost to fix this issue
     estimated_cost = db.Column(db.Float, default=0.0)
     
-    status = db.Column(db.String(20), default='Pendiente') # Pendiente, En Progreso, Resuelto
+    # Budget allocated by Admin
+    allocated_budget = db.Column(db.Float, default=0.0)
+    
+    status = db.Column(db.String(20), default='Pendiente') # Pending, In Progress, Resolved
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('reports', lazy=True))
