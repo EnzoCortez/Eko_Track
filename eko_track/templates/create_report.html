@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h2>Nuevo Reporte Ambiental</h2>
+            <form method="POST">
+                <div class="mb-3">
+                    <label>Título del Problema</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label>Descripción</label>
+                    <textarea name="description" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Categoría</label>
+                        <select name="category" class="form-select" required>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }} (Prio: {{ cat.base_priority }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Sector (Quito)</label>
+                        <select name="location" class="form-select" required>
+                            {% for sector_val, sector_label in sectors %}
+                            <option value="{{ sector_val }}">{{ sector_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Nivel de Criticidad</label>
+                        <select name="criticality" class="form-select">
+                            <option value="Bajo">Bajo</option>
+                            <option value="Medio">Medio</option>
+                            <option value="Alto">Alto</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">Enviar Reporte</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+# Eko Track Development Tasks
+
+- [ ] Project Setup
+    - [ ] Create project directory `eko_track`
+    - [ ] Create `requirements.txt`
+    - [ ] Create `implementation_plan.md`
+- [ ] Database Modeling
+    - [ ] Define `User` model
+    - [ ] Define `ReportType` model (with priority/criticality)
+    - [ ] Define `Report` model (with criticality, location, cost, etc.)
+    - [ ] Define `Budget` or `Intervention` model if needed
+- [ ] Backend Implementation
+    - [ ] Setup Flask app factory
+    - [ ] Configure SQLAlchemy
+    - [ ] Implement Custom Admin Validation (Budget/Sensitive Data)
+    - [ ] Implement Admin Dropdowns (Foreign Keys)
+- [ ] Frontend Implementation
+    - [ ] Create Base Templates (HTML/CSS)
+    - [ ] User Authentication (Login/Register)
+    - [ ] Report Creation Form (Mobile friendly-ish)
+    - [ ] Public/User Dashboard
+- [ ] Logic & Algorithms
+    - [ ] Implement Prioritization Matrix Logic
+    - [ ] Budget constraint logic
+- [ ] Verification
+    - [ ] Test Admin Validation
+    - [ ] Test Dropdowns
+    - [ ] Test Report Creation
