@@ -10,7 +10,7 @@ class MyAdminIndexView(AdminIndexView):
         if not current_user.is_authenticated or not current_user.is_admin:
             return redirect(url_for('login'))
             
-        from models import Report, ReportCategory, MunicipalitySettings, db
+        from models import Report, ReportCategory, MunicipalitySettings, PriorityBudgetMatrix, db
         from sqlalchemy import func
         from flask import request, flash
 
@@ -99,6 +99,7 @@ class MyAdminIndexView(AdminIndexView):
                     'score': cat_data['score'], # Category-level score
                     'cost': r.estimated_cost,
                     'allocated': r.allocated_budget,
+                    'suggested': r.get_suggested_budget(),  # Budget from matrix
                     'funded': funded
                 })
 
@@ -181,3 +182,22 @@ class MunicipalitySettingsView(SecureModelView):
 class UserView(SecureModelView):
     column_exclude_list = ['password']
     form_columns = ['username', 'password', 'is_admin']
+
+class PriorityBudgetMatrixView(SecureModelView):
+    """Admin view for managing priority-budget matrices"""
+    form_columns = ['category', 'priority_level', 'budget_amount']
+    column_list = ['category', 'priority_level', 'budget_amount']
+    
+    form_choices = {
+        'priority_level': [
+            ('Bajo', 'Bajo'),
+            ('Medio', 'Medio'),
+            ('Alto', 'Alto')
+        ]
+    }
+    
+    def on_model_change(self, form, model, is_created):
+        # Validation: Budget cannot be negative
+        if model.budget_amount < 0:
+            raise ValidationError('El presupuesto no puede ser negativo.')
+

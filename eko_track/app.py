@@ -6,8 +6,8 @@ from flask_admin import Admin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Import models and admin
-from models import db, User, Report, ReportCategory, MunicipalitySettings
-from admin_config import MyAdminIndexView, ReportView, MunicipalitySettingsView, UserView, SecureModelView
+from models import db, User, Report, ReportCategory, MunicipalitySettings, PriorityBudgetMatrix
+from admin_config import MyAdminIndexView, ReportView, MunicipalitySettingsView, UserView, SecureModelView, PriorityBudgetMatrixView
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'eko_track_secret_key_123')
@@ -36,6 +36,7 @@ admin.add_view(UserView(User, db.session))
 admin.add_view(ReportView(Report, db.session))
 admin.add_view(SecureModelView(ReportCategory, db.session))
 admin.add_view(MunicipalitySettingsView(MunicipalitySettings, db.session))
+admin.add_view(PriorityBudgetMatrixView(PriorityBudgetMatrix, db.session, name='Budget Matrices'))
 
 # Add Navigation Links
 admin.add_link(MenuLink(name='Main Menu', category='', url='/'))
@@ -63,14 +64,15 @@ def index():
     # We do this in python for simplicity, could be SQL
     reports.sort(key=lambda x: x.calculate_priority_score(), reverse=True)
     
-    # 4. Determine which can be funded
+    # 4. Determine which can be funded based on suggested budgets from matrix
     suggested_interventions = []
     current_spend = 0.0
     
     for r in reports:
-        if current_spend + r.estimated_cost <= total_budget:
+        suggested_budget = r.get_suggested_budget()
+        if current_spend + suggested_budget <= total_budget:
             suggested_interventions.append(r)
-            current_spend += r.estimated_cost
+            current_spend += suggested_budget
             
     return render_template('index.html', 
                            reports=reports, 
@@ -178,6 +180,30 @@ if __name__ == '__main__':
             db.session.add(ReportCategory(name='Agua', base_priority=10))
             db.session.add(ReportCategory(name='Aire', base_priority=7))
             db.session.add(ReportCategory(name='Ruido', base_priority=4))
+            db.session.commit()
+            
+        # Create default priority-budget matrices for each category
+        if not PriorityBudgetMatrix.query.first():
+            categories = ReportCategory.query.all()
+            
+            # Budget allocations per category and priority level
+            budget_config = {
+                'Agua': {'Bajo': 500, 'Medio': 1000, 'Alto': 2000},
+                'Residuos': {'Bajo': 300, 'Medio': 700, 'Alto': 1500},
+                'Aire': {'Bajo': 400, 'Medio': 900, 'Alto': 1800},
+                'Ruido': {'Bajo': 200, 'Medio': 500, 'Alto': 1000}
+            }
+            
+            for cat in categories:
+                if cat.name in budget_config:
+                    for priority, budget in budget_config[cat.name].items():
+                        matrix = PriorityBudgetMatrix(
+                            category_id=cat.id,
+                            priority_level=priority,
+                            budget_amount=budget
+                        )
+                        db.session.add(matrix)
+            
             db.session.commit()
 
         # Create default admin user

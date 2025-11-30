@@ -18,8 +18,31 @@ class ReportCategory(db.Model):
     name = db.Column(db.String(50), nullable=False)
     base_priority = db.Column(db.Integer, default=1, help_text="1 (Low) to 10 (High)")
 
+    def get_budget_for_priority(self, priority_level):
+        """Get suggested budget for a given priority level (Bajo, Medio, Alto)"""
+        matrix_entry = PriorityBudgetMatrix.query.filter_by(
+            category_id=self.id,
+            priority_level=priority_level
+        ).first()
+        return matrix_entry.budget_amount if matrix_entry else 0.0
+
     def __repr__(self):
         return self.name
+
+class PriorityBudgetMatrix(db.Model):
+    """Matrix that assigns budget amounts to priority levels for each category"""
+    id = db.Column(db.Integer, primary_key=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('report_category.id'), nullable=False)
+    category = db.relationship('ReportCategory', backref=db.backref('priority_budgets', lazy=True))
+    
+    # Priority levels: Bajo, Medio, Alto
+    priority_level = db.Column(db.String(20), nullable=False)
+    
+    # Budget amount assigned for this priority level
+    budget_amount = db.Column(db.Float, default=0.0)
+    
+    def __repr__(self):
+        return f'<Matrix {self.category.name if self.category else "N/A"} - {self.priority_level}: ${self.budget_amount}>'
 
 class MunicipalitySettings(db.Model):
     """Singleton to store global settings like Budget"""
@@ -76,6 +99,12 @@ class Report(db.Model):
         crit_score = crit_map.get(self.criticality, 1)
         cat_score = self.category.base_priority if self.category else 1
         return crit_score * cat_score
+    
+    def get_suggested_budget(self):
+        """Get suggested budget based on category's priority-budget matrix"""
+        if self.category:
+            return self.category.get_budget_for_priority(self.criticality)
+        return 0.0
 
     def __repr__(self):
         return f'<Report {self.title}>'
